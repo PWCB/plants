@@ -353,6 +353,7 @@ if finished == 1{
     //or if we're origin
     if stem[i, 0] = 0{go = 1;}
     else{if stem[stem[i, 1], 10] == 1{go = 1;}}
+    go = 1;
     if go == 1{
         if stem[i, 10] = 0{
             //parent index, grandparent index, parent node index, grandparent node array, parent energy, parent goal
@@ -370,7 +371,7 @@ if finished == 1{
                     penergy = ppnode[ni, 3];
                     pgoal = ppnode[ni, 2];
                     //if the parent reaches us then we can start growing
-                    if point_distance(stem[i, 8], stem[i, 9], stem[p, 8], stem[p, 9]) &lt;= stem[p, 3] * penergy/pgoal{
+                    if point_distance(stem[i, 8], stem[i, 9], stem[p, 8], stem[p, 9]) &lt;= 1.1* stem[p, 3] * penergy/pgoal{
                         stem[i, 10] = 1;
                     }
                 }else{//if the parent is origin
@@ -380,7 +381,7 @@ if finished == 1{
                     penergy = stem[p, 12];
                     pgoal = stem[p, 11];
                     //if the parent reaches us then we can start growing
-                    if point_distance(stem[i, 8], stem[i, 9], stem[p, 8], stem[p, 9]) &lt;= stem[p, 3] * penergy/pgoal{
+                    if point_distance(stem[i, 8], stem[i, 9], stem[p, 8], stem[p, 9]) &lt;= 1.1* stem[p, 3] * penergy/pgoal{
                         stem[i, 10] = 1;
                     }
                 }
@@ -529,7 +530,7 @@ if keyboard_check_pressed(vk_down){geni--;}
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>
+            <string>/*
 ///debug
 for(i = 0; i &lt; array_height_2d(stem) &amp;&amp; stem[i, 0] != -1; i++){
     draw_set_color(c_black);
