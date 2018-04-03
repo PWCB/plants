@@ -1,4 +1,5 @@
-///get_nth_parent(index, gens back)
+///get_nth_parent(index, gens back)\
+var i = argument0;
 switch (argument1){
     case 1:
         return stem[i, 1];

@@ -61,14 +61,14 @@ dist = 9999;
 dir = 360*cycle;
 x = cx + lengthdir_x(200, dir);
 y = cy + lengthdir_y(200, dir);
-cycle += .0001;
+cycle += .0003;
 
-var tplant = -1, tleaf = -1, tdist = 9999;
+var tplant = -1, tleaf = -1, tdist = 9999,;
 for(it = 0; it &lt; instance_number(o_plant); it++){
     //get each plant
     tplant = instance_find(o_plant, it);
     //find nearest leaf
-    tleaf = get_nearest_leaf(tplant, x, y, cx, cy);
+    tleaf = get_nearest_leaf(o_plant, x, y, cx, cy);
     if tleaf != -1{
         tdist = point_distance(x, y, tplant.stem[tleaf, 5], tplant.stem[tleaf, 6]);
         //is it closer than what we have
@@ -80,34 +80,6 @@ for(it = 0; it &lt; instance_number(o_plant); it++){
         
     }
 }
-</string>
-          </argument>
-        </arguments>
-      </action>
-    </event>
-    <event eventtype="3" enumb="0">
-      <action>
-        <libid>1</libid>
-        <id>603</id>
-        <kind>7</kind>
-        <userelative>0</userelative>
-        <isquestion>0</isquestion>
-        <useapplyto>-1</useapplyto>
-        <exetype>2</exetype>
-        <functionname></functionname>
-        <codestring></codestring>
-        <whoName>self</whoName>
-        <relative>0</relative>
-        <isnot>0</isnot>
-        <arguments>
-          <argument>
-            <kind>1</kind>
-            <string>
-
-
-
-/* define line AB
-
 </string>
           </argument>
         </arguments>
@@ -132,6 +104,13 @@ for(it = 0; it &lt; instance_number(o_plant); it++){
             <kind>1</kind>
             <string>draw_set_color(c_yellow);
 draw_circle(x, y, 100, 1);
+draw_text(room_width - 100, 25, string(plant));
+draw_text(room_width - 100, 50, string(leaf));
+draw_line(x, y, cx, cy);
+draw_set_color(c_red);
+var d = point_direction(x, y, cx, cy);
+draw_line(x, y, x + lengthdir_x(dist, d), y + lengthdir_y(dist, d));
+draw_set_color(c_white);
 </string>
           </argument>
         </arguments>

@@ -50,6 +50,8 @@ stemgens = 3;
 lendecay = 0.8;
 diralt = 30;
 nodemax = 12;
+reserve = 500;
+overflow = 50;
 
 stemindex = 0;
 genindex = 0;
@@ -65,9 +67,9 @@ stem[0, 3] = 200// + random(100);
 //direction
 stem[0, 4] = 90;
 //div nodes
-stem[0, 5] = round(random(4));//round(random(4));//1 + round(random(nodemax - 1));
+stem[0, 5] = 6//round(random(4));//round(random(4));//1 + round(random(nodemax - 1));
 //cap nodes
-stem[0, 6] = 1 + round(random(2));//round(random(nodemax - stem[0, 5]));
+stem[0, 6] = 3//1 + round(random(2));//round(random(nodemax - stem[0, 5]));
 
 //node[index, 0type(0none - 1stem - 2leaf - 3seed) - 1goal - 2energy]
 var node;
@@ -80,9 +82,9 @@ var node;
         //type
         //node[i, 1] = 1;
         if i &lt; stem[0, 5]{//if cap node or not
-            node[i, 1] = round(random(1));
+            node[i, 1] = 2//round(random(2));
         }else{
-            node[i, 1] = round(random(1));
+            node[i, 1] = round(random(2));
         }
         //if it's going to be a stem, tell that stem its parent here
         if node[i, 1] = 1{
@@ -432,6 +434,21 @@ if finished == 1{
                         if stem[i, 12] &lt; stem[i, 11]{
                             stem[i, 12] += .5;
                         }*/
+                        if stem[i, 0] == 0{
+                            if reserve &gt; 0 &amp;&amp; stem[i, 12] &lt; stem[i, 11] + overflow{//-
+                                stem[i, 12] += .5;
+                                reserve -= .5;
+                            }
+                        }
+                        
+                        //if we need energy
+                        if stem[i, 12] &lt; stem[i, 11]{
+                            //if parent has some
+                            if stem[stem[i, 2], 12] &gt; stem[stem[i, 2], 11]{
+                                stem[i, 12] += .5;
+                                stem[stem[i, 2], 12] -= .5;
+                            }
+                        }
                 }
             }
                 
@@ -479,36 +496,41 @@ if finished == 1{
                     }
                 //otherwise if we can grow
                 }else{
-                        //check if we are recieving light***************************************************************
-                            //at step begin find the index of leaf closest to sun that is intersecting with the sun line
-                            //multiple sun rays would mean multiple nearest leaves
-                            //concentration of these lines would be highest where the sun has less atmosphere to go through
-                            //
-                            //leaf[0-5]
-                            //draw beam from sun extending len&lt;distance to nearest leaf for that beam if any&gt; dir&lt;angle of sun to the point it's orbiting&gt;
-                        //are we the closest leaf
-                        if o_sun.plant = self{
-                        if o_sun.leaf = i{
-                        //if we need the energy give it self
+                        //set things up to recieve excess energy from parent***************************************************************
+                            //if we can grow
+                            //check if parent has excess energy
+                            //if so take it
+                        //if we need energy
                         if stem[i, 9] &lt; stem[i, 8]{
-                            stem[i, 9] += .5;
-                        }else{
-                            //otherwise get parent
-                            var ancestor = -1;
-                            for(gi = 1; gi &lt; stem[i, 0]; gi++){
-                                ancestor = get_nth_parent(i, gi);
-                                //and if that parent needs energy or can store the energy give it to them
-                                if stem[ancestor, 9] &lt; stem[ancestor, 8] + stem[ancestor, 3]{
-                                    stem[anscestor, 9] += .5;
-                                    break;
-                                }
-                                //if they can't take the energy check that parent's parent until there is one that can
+                            //if parent has some
+                            if stem[stem[i, 2], 12] &gt; stem[stem[i, 2], 11]{
+                                stem[i, 9] += .5;
+                                stem[stem[i, 2], 12] -= .5;
                             }
                         }
-                        //adjust size
-                        stem[i, 3] = 15*stem[i, 9]/stem[i, 8];    
-                        stem[i, 4] = stem[i, 3]/4;
-                        }
+                        //are we the closest leaf
+                        if o_sun.plant = self{
+                            if o_sun.leaf = i{
+                                //if we need the energy give it self
+                                if stem[i, 9] &lt; stem[i, 8]{//-
+                                    stem[i, 9] += .5;
+                                }else{
+                                    //otherwise get parent
+                                    var ancestor = -1;
+                                    for(gi = 1; gi &lt; stem[i, 0]; gi++){
+                                        ancestor = get_nth_parent(i, gi);
+                                        //and if that parent needs energy or can store the energy give it to them
+                                        if stem[ancestor, 9] &lt; stem[ancestor, 8] + overflow{//-
+                                            stem[anscestor, 9] += .5;
+                                            break;
+                                        }
+                                        //if they can't take the energy check that parent's parent until there is one that can
+                                    }
+                                }
+                                //adjust size
+                                stem[i, 3] = 15*stem[i, 9]/stem[i, 8];    
+                                stem[i, 4] = stem[i, 3]/4;
+                            }
                         }
                 }
             }
