@@ -15,15 +15,22 @@
     <script>scripts\nth_stem_in_gen.gml</script>
     <script>scripts\stem_child_total.gml</script>
     <script>scripts\get_available_stem.gml</script>
+    <script>scripts\get_nth_parent.gml</script>
+    <script>scripts\get_nearest_leaf.gml</script>
+    <script>scripts\point_line.gml</script>
+    <script>scripts\line_line.gml</script>
   </scripts>
   <fonts name="fonts">
     <font>fonts\font0</font>
   </fonts>
   <objects name="objects">
     <object>objects\o_plant</object>
+    <object>objects\o_sun</object>
+    <object>objects\o_l</object>
   </objects>
   <rooms name="rooms">
     <room>rooms\room0</room>
+    <room>rooms\room1</room>
   </rooms>
   <help>
     <rtf>help.rtf</rtf>
