@@ -27,8 +27,8 @@
             <kind>1</kind>
             <string>sx = 0;
 sy = 0;
-cx = 512;
-cy = 700;
+cx = room_width/2;
+cy = room_height;
 cycle = 0;
 dir = 0;
 plant = -1;
@@ -36,6 +36,7 @@ leaf = -1;
 dist = -1;
 x = 0;
 y = 0;
+
 </string>
           </argument>
         </arguments>
@@ -62,30 +63,32 @@ y = 0;
 leaf = -1;
 dist = 9999;
 
-cx = mouse_x;
-cy = mouse_y;
+//cx = mouse_x;
+//cy = mouse_y;
 
 dir = 360*cycle;
-sx = cx + lengthdir_x(300, dir);
-sy = cy + lengthdir_y(300, dir);
-cycle += .0009;
+sx = mouse_x//cx + lengthdir_x(room_height, dir);
+sy = mouse_y//cy + lengthdir_y(room_height, dir);
+cycle += .002;
 if cycle &gt; 1{cycle = 0;}
 
 var tplant = -1, tleaf = -1, tdist = 9999,;
 for(it = 0; it &lt; instance_number(o_plant); it++){
     //get each plant
     tplant = instance_find(o_plant, it);
-    //find nearest leaf
-    tleaf = get_nearest_leaf(tplant, sx, sy, cx, cy);
-    if tleaf != -1{
-        tdist = point_distance(sx, sy, tplant.stem[tleaf, 5], tplant.stem[tleaf, 6]);
-        //is it closer than what we have
-        if tdist &lt; dist{
-            plant = tplant;
-            leaf = tleaf;
-            dist = tdist;
+    if tplant.finished == 1{
+        //find nearest leaf
+        tleaf = get_nearest_leaf(tplant, sx, sy, cx, cy);
+        if tleaf != -1{
+            tdist = point_distance(sx, sy, tplant.stem[tleaf, 5], tplant.stem[tleaf, 6]);
+            //is it closer than what we have
+            if tdist &lt; dist{
+                plant = tplant;
+                leaf = tleaf;
+                dist = tdist;
+            }
+            
         }
-        
     }
 }
 </string>

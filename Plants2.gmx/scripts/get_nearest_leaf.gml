@@ -4,7 +4,7 @@ var star = argument0.stem, pax = argument1, pay = argument2, pbx = argument3, pb
 for(iv = 0; iv < array_height_2d(star); iv++){
     if star[iv, 13] == 2{
         if star[iv, 9] > 0{
-            leafdist = point_distance(o_sun.x, o_sun.y, star[iv, 5], star[iv, 6])
+            leafdist = point_distance(pax, pay, star[iv, 5], star[iv, 6])
             //is it closer than what we have
             if leafdist < dist{
                 //do we intersect with it
