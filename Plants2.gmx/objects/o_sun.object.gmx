@@ -29,7 +29,7 @@
 sy = 0;
 cx = room_width/2;
 cy = room_height;
-cycle = 0;
+cycle = .5;
 dir = 0;
 plant = -1;
 leaf = -1;
@@ -63,16 +63,26 @@ y = 0;
 leaf = -1;
 dist = 9999;
 
-//cx = mouse_x;
-//cy = mouse_y;
+/*
+cx = room_width*cycle;
+//cy = room_height;
 
-dir = 360*cycle;
-sx = mouse_x//cx + lengthdir_x(room_height, dir);
-sy = mouse_y//cy + lengthdir_y(room_height, dir);
-cycle += .002;
-if cycle &gt; 1{cycle = 0;}
+dir = 180*cycle;
+sx = cx + lengthdir_x(room_height, dir);
+sy = cy + lengthdir_y(room_height, dir);
+cycle += .001;
+if cycle &gt; .55{cycle = .45;}
+*/
 
-var tplant = -1, tleaf = -1, tdist = 9999,;
+if keyboard_check(ord('W')){sy-=10;}
+if keyboard_check(ord('A')){sx-=10;}
+if keyboard_check(ord('S')){sy+=10;}
+if keyboard_check(ord('D')){sx+=10;}
+
+cx = mouse_x;
+cy = mouse_y;
+
+var tplant = -1, tleaf = -1, tdist = 99999,;
 for(it = 0; it &lt; instance_number(o_plant); it++){
     //get each plant
     tplant = instance_find(o_plant, it);
