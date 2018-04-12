@@ -32,6 +32,12 @@ stemtotal = 0;
 geni = 0;
 numi = 0;
 
+
+xmin = x-100;
+xmax = x+100;
+ymin = y-100;
+ymax = y+100;
+
 chode = 0;
 chibi = -1;
 
@@ -45,14 +51,14 @@ for(i = 0; i &lt; 31999; i++){
     }
 }
 
-stemgens = 3;
+stemgens = 2;
 lendecay = 0.8;
 diralt = 30;
 nodemax = 12;
 reserve = 60;
 overflow = 30;
 boost = 10;
-bts = 10;
+bts = .5;
 
 
 stemindex = 0;
@@ -285,8 +291,6 @@ if ig &lt; stemgens{
                                 stem[stemindex, 8] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*(stem[parent, 12]/stem[parent, 11]), stem[parent, 4]);
                                 //y
                                 stem[stemindex, 9] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*(stem[parent, 12]/stem[parent, 11]), stem[parent, 4]);
-                                
-                                //stem[stemindex, 4] = stem[parent, 4]+random(diralt)*choose(1, -1);
                             }
                             
                             //energy goal
@@ -298,7 +302,7 @@ if ig &lt; stemgens{
                             //overflow
                             stem[stemindex, 14] = 0;
                             //contribution score
-                            stem[stemindex, 15] = 1;
+                            stem[stemindex, 15] = 1+random(1);
                             
                             //now set up the nodes for each stem
                             //{//if ig &lt; stemgens -1{
@@ -316,11 +320,11 @@ if ig &lt; stemgens{
                                     }else{
                                         //cap
                                         node2[ij, 1] = choose(1, 1, 2, 2);
-                                        /*if ij &lt; stem[stemindex, 5] + 2{//make sure first two cap nodes are leaves
+                                        if ij &lt; stem[stemindex, 5] + 1{//every branch must have at least on leaft to justify its existence
                                             node2[ij, 1] = 2;
                                         }else{
                                             node2[ij, 1] = 1+round(random(1)+clamp(ig/10, 0, 1));
-                                        }*/
+                                        }
                                     }
                                         //if it's going to be a stem, tell that stem its parent here
                                         if node2[ij, 1] = 1 &amp;&amp; ig &lt; stemgens -2{
@@ -369,7 +373,7 @@ if ig &lt; stemgens{
                                 stem[stemindex, 6] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*(n+.5)/stem[parent, 5], stem[parent, 4]);
                                 
                                 //contribution score
-                                stem[stemindex, 15] = 1;
+                                stem[stemindex, 15] = 5;
                             }else{//cap nodes
                                 //x (parentx + lengthdir_x(parentlength, parentdir))
                                 stem[stemindex, 5] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*(stem[parent, 12]/stem[parent, 11]), stem[parent, 4]);
@@ -427,50 +431,174 @@ if ig &lt; stemgens{
             <kind>1</kind>
             <string>///bidgaddy
 ///grow
-//????????????????????????????????????????????????????????????????????so children get energy from parent in order of whichever comes first on node list
-///////////////////////////////////////////////////////////////energy should be given to the stems with giving the most energy
-//////////////////////////////////////////////////////////////stem[i, 15] = contribution points   children suck out energy faster than it can give to parent
-//yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyleaves not taking priority
 if finished == 1{
 reserve += .25;
     for(i = 0; i &lt; array_height_2d(stem) &amp;&amp; stem[i, 0] != -1; i++){
     
+        
+        
+        //if we're not playing a roll we lose growth priority
+        stem[i, 15] -= .000001;
+        
+        stem[i, 15] = clamp(stem[i, 15], 1, 4);
+    
+        //for stems
+        if stem[i, 13] == 1{
+            var go = 0, pn;
+            //if the parent can grow
+            //or if we're origin
+            if stem[i, 0] = 0{go = 1;}
+            else{if stem[stem[i, 1], 10] &gt; 0{go = 1;}}
+            if go == 1{
+                //if we can't grow yet
+                if stem[i, 10] = 0{
+                    var p = stem[i, 1], g;
+                    {       
+                        //if we're on the cap we can grow immediately
+                        if stem[i, 2] &gt; stem[p, 5]{
+                            stem[i, 10] = 1;
+                        }else{//for divs
+                            //get parent energy
+                            g = stem[p, 12]/stem[p, 11];
+                            //if distance between ourself and parent is less than parent length
+                            if point_distance(stem[i, 8], stem[i, 9], stem[p, 8], stem[p, 9]) &lt;= 1 + stem[p, 3] * g{
+                                //we can grow
+                                stem[i, 10] = 1;
+                            }
+                        }
+                    }
+                //otherwise if we can grow
+                }else{
+                    var lp = clamp(stem[i, 10] - 1, 0, 1)/2;//leaf proportional growth
+                      //if we're not original stem
+                        if stem[i, 0] &gt; 0{
+                            //base transfer speed time priority times cap leaf progress
+                            var enrgy = bts*stem[i, 15];
+                            {
+                                //if we can take overflow
+                                if stem[i, 14] &lt; overflow/stem[i, 0] + enrgy{//-
+                                    //if parent has some
+                                    if stem[stem[i, 1], 14] &gt; stem[i, 14] + enrgy{
+                                        stem[i, 14] += enrgy;
+                                        stem[stem[i, 1], 14] -= enrgy;
+                                        enrgy /= 2;
+                                    }
+                                }
+
+                                //do this when we're sure at least one cap leaf has grown
+                                if stem[i, 10] &gt; 1{
+                                    //if we need energy
+                                    if stem[i, 12] &lt; stem[i, 11]{
+                                        //if parent energy, minus what we want to take, is still greater than our overflow 
+                                        if stem[stem[i, 1], 14] - enrgy*lp &gt; stem[i, 14]{
+                                            //take overflow
+                                            stem[stem[i, 1], 14] -= enrgy*lp;
+                                            //give to length
+                                            stem[i, 12] += enrgy*lp;
+                                            stem[i, 4] += random(3)*choose(1, -1)*(1-(stem[i, 12]/stem[i, 11]))*lp;
+                                            enrgy /= 2;
+                                        }
+                                    }
+                                }
+                                
+                                //if parent overflow is less than our overflow we need to give it ours
+                                if stem[stem[i, 1], 14] &lt; stem[i, 14] + enrgy{///see if this growth should be scaled to leaf progress ---------
+                                    //if parent isnt full length
+                                    if stem[stem[i, 1], 12] &lt; stem[stem[i, 1], 11]{
+                                        stem[i, 14] -= bts*clamp(stem[stem[i, 10], 10] - 1, 0, 1);
+                                        stem[stem[i, 1], 12] += bts*clamp(stem[stem[i, 10], 10] - 1, 0, 1);
+                                    }else{
+                                        stem[i, 14] -= bts;
+                                        stem[stem[i, 1], 14] += bts;
+                                    }
+                                }else{//if parent cant take the energy and we arent done growing then convert it into length
+                                    if stem[i, 10] &gt; 1{
+                                        if stem[i, 12] + bts*lp &lt; stem[i, 11]{
+                                            stem[i, 14] -= bts*lp;
+                                            stem[i, 12] += bts*lp;
+                                        }
+                                    }
+                                }
+                            }
+                        }else{//origin stem gets energy from reserves
+                            if reserve &gt; bts{//-
+                                if stem[i, 14] &lt; overflow{
+                                    stem[i, 14] += bts;
+                                    reserve -= bts;
+                                }
+                                if stem[i, 12] &lt; stem[i, 11] + bts*lp{
+                                    stem[i, 12] += bts*lp;
+                                    reserve -= bts*lp;
+                                    stem[i, 4] += random(3)*choose(1, -1)*(1-(stem[i, 12]/stem[i, 11]));
+                                }
+                            }
+                        }
+                        
+                        
+                        //reposition after length change
+                        //if there's a parent
+                        if stem[i, 1] != -1{
+                            var parent = stem[i, 1], g;
+                            {
+                                g = stem[parent, 12]/stem[parent, 11];
+                                if stem[i, 2] &lt; stem[parent, 5]{//div nodes
+                                    //x (parentx + lengthdir_x(parentlength*(node/divnodes), parentdir))
+                                    stem[i, 8] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
+                                    //y
+                                    stem[i, 9] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
+                                }else{//cap nodes
+                                    //x (parentx + lengthdir_x(parentlength, parentdir))
+                                    stem[i, 8] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*g, stem[parent, 4]);
+                                    //y
+                                    stem[i, 9] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*g, stem[parent, 4]);
+                                }
+                                
+                            }
+                        }
+                        
+                        
+                }
+            }
+                
+            //----------------------pos change
+        }
+        
+        
+        
+        
+        
+        
         //for leaf
         if stem[i, 13] == 2{
             var go = 0;
             //if the parent can grow
             //or if we're origin
             if stem[i, 0] = 0{go = 1;}
-            else{if stem[stem[i, 1], 10] == 1{go = 1;}}
+            else{if stem[stem[i, 1], 10] &gt; 0{go = 1;}}
 
             if go == 1{
                 //if we can't grow yet
                 if stem[i, 10] = 0{
-                    //parent index, grandparent index, parent node index, grandparent node array, parent energy, parent goal
-                    var p = stem[i, 1], penergy, pgoal;
+                    var p = stem[i, 1], g;
                     {   
-                            //if we're a leaf on the cap we can grow immediately
+                            //if we're on the cap we can grow immediately
                             if stem[i, 2] &gt; stem[p, 5]{
                                 stem[i, 10] = 1;
                             }else{//for divs
                                 //get parent energy
-                                penergy = stem[p, 12];
-                                pgoal = stem[p, 11];
-                                //if the parent reaches us then we can start growing
-                                if point_distance(stem[i, 5], stem[i, 6], stem[p, 8], stem[p, 9]) &lt;= 1 + stem[p, 3] * penergy/pgoal{
+                                g = stem[p, 12]/stem[p, 11];
+                                //if distance between ourself and parent is less than parent length
+                                if point_distance(stem[i, 5], stem[i, 6], stem[p, 8], stem[p, 9]) &lt;= 1 + stem[p, 3] * g{
+                                    //we can grow
                                     stem[i, 10] = 1;
                                 }
                             }
                     }
                 //otherwise if we can grow
                 }else{
-                        //set things up to recieve excess energy from parent***************************************************************
-                            //if we can grow
-                            //check if parent has excess energy
-                            //if so take it
                         //if we need energy
-                        if stem[i, 9] &lt; stem[i, 8]{//////LEAF ENERFY ---------------------------------------------------- 
-                            var enrgy = bts;//*.9;///(stem[stem[i, 1], 5] + stem[stem[i, 1], 6])/**(stem[i, 15])*/; //----------------------- LEAVES STILL NOT GETTING PRIORITY IN EVERY GENERATION
+                        if stem[i, 9] &lt; stem[i, 8]{
+                            var enrgy = bts*stem[i, 15];
                             {
                                 //if parent has the energy to spare
                                 if stem[stem[i, 1], 14] &gt;= enrgy{
@@ -481,23 +609,24 @@ reserve += .25;
                                 }
                             }
                         }
+                        
+                        //Photosynthesis
                         //are we the closest leaf
                         if o_sun.plant = self{
                             if o_sun.leaf = i{
                                 //if we need the energy give it to self
                                 if stem[i, 9] &lt; stem[i, 8]{//-
-                                    stem[i, 9] += bts*2;
+                                    stem[i, 9] += bts;
                                 }else{
                                     var p = stem[i, 1];
                                     {
                                         //if parent needs energy
                                         if stem[p, 12] &lt; stem[p, 11]{
-                                            stem[p, 12] += bts*2;
+                                            stem[p, 12] += bts;
                                             stem[p, 4] += random(3)*choose(1, -1)*(1-(stem[p, 12]/stem[p, 11]));
                                             //give ourself and the parent contribution points so its parent knows to prioritize it
                                             stem[i, 15] += .0001;
                                             stem[p, 15] += .0001;
-                                            break;
                                         }else{
                                             //if it doesnt, give it overflow
                                             if stem[p, 14] &lt; overflow/stem[p, 0]{
@@ -505,172 +634,57 @@ reserve += .25;
                                                 //give ourself and parent contribution points
                                                 stem[i, 15] += .0001;
                                                 stem[p, 15] += .0001;
-                                                break;
                                             }
                                         }
                                     }
-                                    /*for(in = 1; in &lt;= stem[i, 0]; in++){
-                                        var p = get_nth_parent(i, in);
-                                        chode = p;
-                                        //if parent needs energy
-                                        if stem[p, 12] &lt; stem[p, 11]{
-                                            stem[p, 12] += bts*2;
-                                            stem[p, 4] += random(3)*choose(1, -1)*(1-(stem[p, 12]/stem[p, 11]));
-                                            //give ourself and the parent contribution points so its parent knows to prioritize it
-                                            stem[i, 15] += .0001;
-                                            stem[p, 15] += .0001;
-                                            break;
-                                        }else{
-                                            //if it doesnt, give it overflow
-                                            if stem[p, 14] &lt; overflow/stem[p, 0]{
-                                                stem[p, 14] += bts*2;
-                                                //give ourself and parent contribution points
-                                                stem[i, 15] += .0001;
-                                                stem[p, 15] += .0001;
-                                                break;
-                                            }
-                                        }
-                                    }*/
-                                
-                                    //otherwise get parent
-                                    /*var ancestor = -1;
-                                    for(gi = 1; gi &lt; stem[i, 0]; gi++){
-                                        ancestor = get_nth_parent(i, gi);
-                                        //and if that parent needs energy or can store the energy give it to them
-                                        if stem[ancestor, 9] &lt; stem[ancestor, 8] + overflow{//-
-                                            stem[anscestor, 9] += .5;
-                                            break;
-                                        }
-                                        //if they can't take the energy check that parent's parent until there is one that can
-                                    }*/
                                 }
-                                //adjust size
-                                stem[i, 3] = 15*stem[i, 9]/stem[i, 8];    
-                                stem[i, 4] = stem[i, 3]/6;
                             }
                         }
+                        
+                        
+                        
+                    //reposition after length change
+                    if stem[i, 1] != -1{
+                        var parent = stem[i, 1], g;
+                        {
+                            //adjust size
+                            stem[i, 3] = 15*stem[i, 9]/stem[i, 8];    
+                            stem[i, 4] = stem[i, 3]/6;
+                        
+                            g = stem[parent, 12]/stem[parent, 11];
+                            if stem[i, 2] &lt; stem[parent, 5]{//div nodes
+                                //x (parentx + lengthdir_x(parentlength*(node/divnodes), parentdir))
+                                stem[i, 5] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
+                                //y
+                                stem[i, 6] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
+                            }else{//cap nodes
+                                //x (parentx + lengthdir_x(parentlength, parentdir))
+                                stem[i, 5] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*g, stem[parent, 4]);
+                                //y
+                                stem[i, 6] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*g, stem[parent, 4]);
+                                
+                                //if growth%(0-1) is more than parent leaf progress(1-2) minus 1
+                                if stem[i, 9]/stem[i, 8] &gt; stem[stem[i, 1], 10] - 1{
+                                    //add our progress to parent
+                                    stem[stem[i, 1], 10] = 1 + stem[i, 9]/stem[i, 8]; //------------------------------------
+                                }
+                            }                   
+                            
+                        }
+                    }
+                        
+                        
                 }
             }
                 
-            //reposition after length change
-            if stem[i, 1] != -1{
-                var parent = stem[i, 1], g;
-                    g = (stem[parent, 12])/stem[parent, 11]
-                    if stem[i, 2] &lt; stem[parent, 5]{//div nodes
-                        //x (parentx + lengthdir_x(parentlength*(node/divnodes), parentdir))
-                        stem[i, 5] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*g*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
-                        //y
-                        stem[i, 6] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*g*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
-                    }else{//cap nodes
-                        //x (parentx + lengthdir_x(parentlength, parentdir))
-                        stem[i, 5] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*g, stem[parent, 4]);
-                        //y
-                        stem[i, 6] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*g, stem[parent, 4]);
-                    }
-            }
+            //-------------
         }
         
-    
-    
-    
-        //for stems
-        if stem[i, 13] == 1{
-            var go = 0, pn;
-            //if the parent can grow
-            //or if we're origin
-            if stem[i, 0] = 0{go = 1;}
-            else{if stem[stem[i, 1], 10] == 1{go = 1;}}
-            if go == 1{
-                //if we can't grow yet
-                if stem[i, 10] = 0{
-                    //parent index, grandparent index, parent node index, grandparent node array, parent energy, parent goal
-                    var p = stem[i, 1], pp, ni, ppnode, penergy, pgoal;
-                    {       
-                            //get parent energy
-                            penergy = stem[p, 12];
-                            pgoal = stem[p, 11];
-                            //if the parent reaches us then we can start growing
-                            if point_distance(stem[i, 8], stem[i, 9], stem[p, 8], stem[p, 9]) &lt;= 1 + stem[p, 3] * penergy/pgoal{
-                                stem[i, 10] = 1;
-                            }
-                    }
-                //otherwise if we can grow
-                }else{
-                        //grow (gets energy from descendant leaf)************************************************************
-                        //can recieve &lt;storable&gt;*length extra energy to redispers to children********************************
-                        
-/*                        stem[i, 3] += .2/(stem[i, 0]+1);    
-                        stem[i, 4] += random(20)/10 * choose(1, -1) * (stem[i, 11] - stem[i, 12])/stem[i, 11];
-                        if stem[i, 12] &lt; stem[i, 11]{
-                            stem[i, 12] += .5;
-                        }*/
-                        
-                        //*****make it so children can only sap overflow
-                        //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^6make overflow stem[i, 14]        if our overflow/cap &gt; parent overflow/cap then give overflow to parent
-                        //if we're not original stem
-                        if stem[i, 0] &gt; 0{
-                            var enrgy = bts*10//*.1;//(stem[stem[i, 1], 5] + stem[stem[i, 1], 6]);
-                            { 
-                                //if we need energy
-                                if stem[i, 12] &lt; stem[i, 11]{//-GGGGGGGGGGGGGGGg sTEM ENERGY
-                                    //if parent has some
-                                    if stem[stem[i, 1], 14] &gt; 0{
-                                        stem[i, 12] += enrgy*.3;
-                                        stem[i, 14] += enrgy*.7;
-                                        stem[stem[i, 1], 14] -= enrgy;
-                                        stem[i, 4] += random(3)*choose(1, -1)*(1-(stem[i, 12]/stem[i, 11]));
-                                    }
-                                }
-                                //if we can take overflow
-                                if stem[i, 14] &lt; overflow/stem[i, 0]{//-
-                                    //if parent has some
-                                    if stem[stem[i, 1], 14] &gt; 0{
-                                        stem[i, 14] += enrgy;
-                                        stem[stem[i, 1], 14] -= enrgy;
-                                        //stem[i, 4] += random(3)*choose(1, -1)*();
-                                    }
-                                }
-                                
-                                //if parent overflow% is less than our overflow% we need to give it our overflow
-                                if stem[stem[i, 1], 14]/2 &lt; stem[i, 14]{//stem[stem[i, 1], 14]/overflow/stem[stem[i, 1], 0] &lt; stem[i, 14]/overflow/stem[i, 0]{
-                                    if stem[stem[i, 1], 12] &lt; stem[stem[i, 1], 11]{
-                                        stem[i, 14] -= bts/10;
-                                        stem[stem[i, 1], 12] += bts/10;
-                                    }else{
-                                        stem[i, 14] -= bts/10;
-                                        stem[stem[i, 1], 14] += bts/10;
-                                    }
-                                }
-                            }
-                        }else{//origin stem gets energy from reserves
-                            if reserve &gt; bts &amp;&amp; stem[i, 12] &lt; stem[i, 11] + overflow/stem[i, 0]{//-
-                                stem[i, 14] += bts*.9;
-                                stem[i, 12] += bts*.1;
-                                stem[i, 4] += random(3)*choose(1, -1)*(1-(stem[i, 12]/stem[i, 11]));
-                                reserve -= bts;
-                            }
-                        }
-                }
-            }
-                
-            //reposition after length change
-            //if there's a parent
-            if stem[i, 1] != -1{
-                var parent = stem[i, 1], g;
-                    g = (stem[parent, 12])/stem[parent, 11]
-                    if stem[i, 2] &lt; stem[parent, 5]{//div nodes
-                        //x (parentx + lengthdir_x(parentlength*(node/divnodes), parentdir))
-                        stem[i, 8] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*g*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
-                        //y
-                        stem[i, 9] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*g*(stem[i, 2]+.5)/stem[parent, 5], stem[parent, 4]);
-                    }else{//cap nodes
-                        //x (parentx + lengthdir_x(parentlength, parentdir))
-                        stem[i, 8] = stem[parent, 8] + lengthdir_x(stem[parent, 3]*g, stem[parent, 4]);
-                        //y
-                        stem[i, 9] = stem[parent, 9] + lengthdir_y(stem[parent, 3]*g, stem[parent, 4]);
-                    }
-            }
-        }    
+        
+        
+        
+        
+        
     }
 }
 
@@ -770,10 +784,19 @@ if so add energy in our node[energy]
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>if keyboard_check_pressed(vk_right){numi++;}
+            <string>/*if keyboard_check_pressed(vk_right){numi++;}
 if keyboard_check_pressed(vk_left){numi--;}
 if keyboard_check_pressed(vk_up){geni++;}
-if keyboard_check_pressed(vk_down){geni--;}
+if keyboard_check_pressed(vk_down){geni--;}*/
+
+if keyboard_check(ord('D')){view_xview[0] += 10;}
+if keyboard_check(ord('A')){view_xview[0] -= 10;}
+if keyboard_check(ord('W')){view_yview[0] -= 10;}
+if keyboard_check(ord('S')){view_yview[0] += 10;}
+
+if mouse_wheel_up(){view_wview[0] /= 1.1; view_hview[0] /= 1.1;}
+if mouse_wheel_down(){view_wview[0] *= 1.1; view_hview[0] *= 1.1;}
+
 </string>
           </argument>
         </arguments>
@@ -796,43 +819,9 @@ if keyboard_check_pressed(vk_down){geni--;}
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>///debug
-/*
-for(i = 0; i &lt; array_height_2d(stem) &amp;&amp; stem[i, 0] != -1; i++){
-    //draw_set_color(c_black);
-    //if stem[i, 10] == 2{
-    if stem[i, 13] == 2{
-        //draw_rectangle(stem[i, 5], stem[i, 6], stem[i, 5] + 30, stem[i, 6] + 30, 0);
-        draw_set_color(c_red);
-        draw_line(stem[i, 5], stem[i, 6], stem[i, 5] + 10, stem[i, 6])
-//        draw_text(stem[i, 5] + 25, stem[i, 6], string(stem[i, 9]));
-        draw_set_color(c_teal);
-        draw_text(stem[i, 5] + 25, stem[i, 6] + 10, string(stem[i, 13]));
-        draw_set_color(c_orange);
-        draw_text(stem[i, 5] + 25, stem[i, 6] + 20, string(stem[i, 10]));
-    }
-}
-/*
-    draw_set_color(c_black);
-    draw_rectangle(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), 30 + stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), 30 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]),0);
-    if stem[i, 8] != -1{
-        draw_set_color(c_yellow);
-        draw_text(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 2]));
-        draw_set_color(c_red);
-        draw_text(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), 10 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 10]));
-        draw_set_color(c_lime);
-        if stem[i, 0] != 0{
-            var pnode = stem[stem[i, 1], 7];
-            draw_text(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), 20 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(pnode[stem[i, 2], 3]));
-        }
-    }else{
-        draw_set_color(c_yellow);
-        draw_text(stem[i, 8] +25*i + lengthdir_x(stem[i, 3], stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 2]));
-        draw_set_color(c_red);
-        draw_text(stem[i, 8] +25*i + lengthdir_x(stem[i, 3], stem[i, 4]), 10 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 10]));
-        draw_set_color(c_lime);
-        draw_text(stem[i, 8] +25*i + lengthdir_x(stem[i, 3], stem[i, 4]), 20 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 8]));
-    }
+            <string>///loading
+if finished == 0{
+    draw_rectangle(0, 0, (room_width/stemgens)*ig, (room_height/get_gen_stem_total(ig))*is, 0);
 }
 </string>
           </argument>
@@ -866,7 +855,7 @@ if finished == 1{
 for(i = 0; i &lt; array_height_2d(stem) &amp;&amp; stem[i, 0] != -1; i++){
     //if stem
     if stem[i, 13] == 1{
-        if stem[i, 10] == 1{
+        if stem[i, 10] &gt; 0{
             var w = 20, eng = stem[i, 11], en = stem[i, 12], a;
             a = en/eng;
             w = (stem[i, 3]+stem[i, 14]*20)/75;//+stem[stem[i, 1], 3]/1.2;
@@ -879,7 +868,7 @@ for(i = 0; i &lt; array_height_2d(stem) &amp;&amp; stem[i, 0] != -1; i++){
     }
     
     if stem[i, 13] == 2{
-        if stem[i, 10] == 1{
+        if stem[i, 10] &gt; 0{
             var energy, goal, g;
             {   
                 energy = stem[i, 9];
@@ -933,6 +922,79 @@ stem[0, 4] = random(180);
 stem[0, 5] = round(random(12));
 //cap nodes
 stem[0, 6] = round(random(4));
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///debug
+/*
+for(i = 0; i &lt; array_height_2d(stem) &amp;&amp; stem[i, 0] != -1; i++){
+    //draw_set_color(c_black);
+    //if stem[i, 10] == 2{
+    if stem[i, 10] == 1{
+    if stem[i, 13] == 1{
+        //draw_set_color(c_black);
+        //draw_rectangle(stem[i, 5], stem[i, 6], stem[i, 5] + 30, stem[i, 6] + 30, 0);
+        //draw_set_color(c_red);
+        //draw_line(stem[i, 5], stem[i, 6], stem[i, 5] + 10, stem[i, 6])
+//        draw_text(stem[i, 5] + 25, stem[i, 6], string(stem[i, 9]));
+        draw_set_color(c_white);
+        draw_text(stem[i, 8] + lengthdir_x(stem[i, 3] + 25, stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3] + 25, stem[i, 4]), string(stem[i, 14]));
+        draw_set_color(c_yellow);
+        draw_text(stem[i, 8] + lengthdir_x(stem[i, 3] + 25, stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3] + 25, stem[i, 4]), string(stem[i, 10]));
+    }
+
+    if stem[i, 13] == 2{
+        //draw_set_color(c_black);
+        //draw_rectangle(stem[i, 5], stem[i, 6], stem[i, 5] + 30, stem[i, 6] + 30, 0);
+        //draw_set_color(c_red);
+        //draw_line(stem[i, 5], stem[i, 6], stem[i, 5] + 10, stem[i, 6])
+//        draw_text(stem[i, 5] + 25, stem[i, 6], string(stem[i, 9]));
+        draw_set_color(c_teal);
+        draw_text(stem[i, 5] + lengthdir_x(stem[i, 3] + 25, stem[stem[i, 1], 4] + stem[i, 4]), stem[i, 6] + lengthdir_y(stem[i, 3] + 25, stem[stem[i, 1], 4] + stem[i, 4]), string(stem[i, 14]));
+        draw_set_color(c_orange);
+        draw_text(stem[i, 5] + lengthdir_x(stem[i, 3] + 25, stem[stem[i, 1], 4] + stem[i, 4]), stem[i, 6] + lengthdir_y(stem[i, 3] + 25, stem[stem[i, 1], 4] + stem[i, 4]), string(stem[i, 10]));
+    }
+    }
+}
+/*
+    draw_set_color(c_black);
+    draw_rectangle(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), 30 + stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), 30 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]),0);
+    if stem[i, 8] != -1{
+        draw_set_color(c_yellow);
+        draw_text(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 2]));
+        draw_set_color(c_red);
+        draw_text(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), 10 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 10]));
+        draw_set_color(c_lime);
+        if stem[i, 0] != 0{
+            var pnode = stem[stem[i, 1], 7];
+            draw_text(stem[i, 8] + lengthdir_x(stem[i, 3], stem[i, 4]), 20 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(pnode[stem[i, 2], 3]));
+        }
+    }else{
+        draw_set_color(c_yellow);
+        draw_text(stem[i, 8] +25*i + lengthdir_x(stem[i, 3], stem[i, 4]), stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 2]));
+        draw_set_color(c_red);
+        draw_text(stem[i, 8] +25*i + lengthdir_x(stem[i, 3], stem[i, 4]), 10 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 10]));
+        draw_set_color(c_lime);
+        draw_text(stem[i, 8] +25*i + lengthdir_x(stem[i, 3], stem[i, 4]), 20 + stem[i, 9] + lengthdir_y(stem[i, 3], stem[i, 4]), string(stem[i, 8]));
+    }
+}
 </string>
           </argument>
         </arguments>
