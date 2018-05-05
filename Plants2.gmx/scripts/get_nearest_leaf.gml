@@ -2,7 +2,7 @@
 
 var star = argument0.stem, pax = argument1, pay = argument2, pbx = argument3, pby = argument4, nearest = -1, dist = 99999, leafdist, nearest = -1, g, lax, lay, lbx, lby;
 for(iv = 0; iv < array_height_2d(star); iv++){
-    if star[iv, 13] == 2{
+    if star[iv, 13] == 3 || star[iv, 13] == 4{
         if star[iv, 9] > 0{
             leafdist = point_distance(pax, pay, star[iv, 5], star[iv, 6])
             //is it closer than what we have

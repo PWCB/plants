@@ -5,7 +5,7 @@ for(ivb = 0; ivb < array_height_2d(stem); ivb++){
     //is it our generation
     if stem[ivb, 0] == genvb{
     //if it's a stem
-    if stem[ivb, 13] == 1{
+    if stem[ivb, 13] == 1 || stem[ivb, 13] == 2{
         //is it the nth one in that generation
         if countervb == nvb{
             //if so return its index

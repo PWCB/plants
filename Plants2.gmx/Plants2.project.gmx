@@ -29,6 +29,7 @@
     <object>objects\o_plant</object>
     <object>objects\o_sun</object>
     <object>objects\o_l</object>
+    <object>objects\o_control</object>
   </objects>
   <timelines name="timelines">
     <timeline>timelines\timeline0</timeline>
